@@ -8,16 +8,22 @@ class Users{
   late String _birthday;
   late ByteData _icon;
 
+  late Map<String, dynamic> _dbProcessedMap;
+
   String get userId => _userId;
-  String get name => _name;
-  String get birthday => _birthday;
-  ByteData get icon => _icon;
+  Map<String, dynamic> get dbProcessedMap => _dbProcessedMap; 
 
   Users({required String nameArg, required String birthdayArg, required ByteData iconArg}){
     _userId = nameArg;
     _name = nameArg;
     _birthday = birthdayArg;
     _icon = iconArg;
+
+    _dbProcessedMap = {
+      UsersTableColumn.NAME.name: _name, 
+      UsersTableColumn.BIRTHDAY.name:_birthday,
+      UsersTableColumn.ICON.name:_icon
+    };
   }
 }
 
@@ -32,18 +38,14 @@ class UserResistry{
     await db
       .collection("users")
       .doc(_user.userId)
-      .set({
-        UsersTableColumn.NAME.name:_user.name, 
-        UsersTableColumn.BIRTHDAY.name:_user.birthday,
-        UsersTableColumn.ICON.name:_user.icon 
-      });
+      .set(_user.dbProcessedMap);
   }
 
-  Future update<COLUMN extends UsersTableColumn>({required Users newUserDataArg}) async{
+  Future update({required Users newUserDataArg, required UsersTableColumn columnArg}) async{
     await db
       .collection("users")
       .doc(_user.userId)
-      .update({COLUMN: ""});
+      .update(_user.dbProcessedMap);
   }
 }
 
