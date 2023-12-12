@@ -1,14 +1,17 @@
-import 'dart:typed_data';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 const USERS_TABLE_COLLECTION_NAME = "users";
 
+///このデータベースでのdocumentId(userId)はメールアドレスとなる。
+///これは、Firebase.Authenticationでメール登録するするときに、
+///重複が許されないため、一意な値になるからである。
+///
+///todo 他サービスでのアカウント作成からFirestoreへの登録にはもう少し工夫が必要かと思われる。
 class Users{
   late final String _userId;
   late final String _name;
   late final String _birthday;
-  late final String _iconLocalPath;
+  late final String _iconImageLocalPath;
   late final String _email;
 
   late final Map<String, dynamic> _dbProcessedMap;
@@ -18,20 +21,20 @@ class Users{
 
   Users({
     required String nameArg, 
-    required String birthdayArg, 
+    required String birthdayArg,
     required String iconLocalPathArg, 
     required String emailArg
   }){
     _userId = emailArg;
     _name = nameArg;
     _birthday = birthdayArg;
-    _iconLocalPath = iconLocalPathArg;
+    _iconImageLocalPath = iconLocalPathArg;
     _email = emailArg;
 
     _dbProcessedMap = {
       UsersTableColumn.NAME.name: _name, 
       UsersTableColumn.BIRTHDAY.name:_birthday,
-      UsersTableColumn.ICON_LOCAL_PATH.name:_iconLocalPath,
+      UsersTableColumn.ICON_Image_LOCAL_PATH.name:_iconImageLocalPath,
       UsersTableColumn.EMAIL.name: _email
     };
   }
@@ -40,36 +43,29 @@ class Users{
 class UserResistry{
   final db = FirebaseFirestore.instance;
 
-  late Users _user;
-
-  UserResistry(this._user);
-
-  Future add() async{
+  Future add({required Users newUserDataArg}) async{
     await db
       .collection(USERS_TABLE_COLLECTION_NAME)
-      .doc(_user.userId)
-      .set(_user.dbProcessedMap);
+      .doc(newUserDataArg.userId)
+      .set(newUserDataArg.dbProcessedMap);
   }
 
   Future update({required Users newUserDataArg, required UsersTableColumn columnArg}) async{
     await db
       .collection(USERS_TABLE_COLLECTION_NAME)
-      .doc(_user.userId)
-      .update(_user.dbProcessedMap);
+      .doc(newUserDataArg.userId)
+      .update(newUserDataArg.dbProcessedMap);
   }
 }
 
 class UserDataFetcher{
   final db = FirebaseFirestore.instance;
 
-  late final String _email;
-
-  UserDataFetcher(this._email);
-
-  Future<Map<String, dynamic>> fetch() async{
+  ///Mapデータを取得するときは、取得した変数[UsersTableColumn.カラム名（データベースの項目名）.name]と記述する。
+  Future<Map<String, dynamic>> fetch({required String targetUserIdArg}) async{
     final fetchedUser = await db
       .collection(USERS_TABLE_COLLECTION_NAME)
-      .doc(_email)
+      .doc(targetUserIdArg)
       .get();
 
     return fetchedUser.data() ?? {};
@@ -79,6 +75,6 @@ class UserDataFetcher{
 enum UsersTableColumn{
   NAME,
   BIRTHDAY,
-  ICON_LOCAL_PATH,
+  ICON_Image_LOCAL_PATH,
   EMAIL
 }
